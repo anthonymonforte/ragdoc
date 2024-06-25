@@ -1,6 +1,6 @@
 import argparse
 from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
-
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def main():
 
@@ -13,6 +13,15 @@ def main():
     doc_loader = PyPDFDirectoryLoader(args.p)
     docs = doc_loader.load()
     
+    chunkifier = RecursiveCharacterTextSplitter(
+        chunk_size=800,
+        chunk_overlap=80,
+        length_function=len,
+        is_separator_regex=False
+    )
+
+    chunks = chunkifier.split_documents(docs)
+    print("Chunks: ", len(chunks))
 
 if __name__ == "__main__":
     main()
