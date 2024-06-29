@@ -48,21 +48,31 @@ def extract_images(folder_path):
                     img_num += 1
                     img_xrefs.append(xref)
 
-                if img_num > 0:
+                #if img_num > 0:
                     # Get captions
-                    pattern = re.compile(r'\n(Fig\.\s\d+.*?)\n', re.IGNORECASE)
+                pattern = re.compile(r'\n(Fig\.\s\d+.*?)\n', re.IGNORECASE)
 
-                    page = doc.load_page(page_num)
-                    text = page.get_text("text")
-                    
-                    for match in pattern.findall(text):
-                        caption_num = 0                        
-                        
-                        caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xrefs[caption_num]))
-                        with open(caption_path, "w") as file:
-                            caption =match.strip()
-                            file.write(caption)
-                        caption_num += 1
+                page = doc.load_page(page_num)
+                text = page.get_text("text")
+                
+                caption_num = 0
+                for match in pattern.findall(text):
+                    img_xref = 0
+                    #temporary guard check
+                    if len(img_xrefs) > caption_num:
+                        img_xref = img_xrefs[caption_num]
+
+                    caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xref))
+                    with open(caption_path, "w") as file:
+                        caption =match.strip()
+                        file.write(caption)
+                    caption_num += 1
+
+                if caption_num != img_num:
+                    caption_path = os.path.join(folder_path, "images/" "caption_audit.txt")
+                    with open(caption_path, "a") as file:                        
+                        file.write("Page%d:\t%d Images,\t%dCaptions\n" % (page_num, img_num, caption_num))
+
 
 
 
