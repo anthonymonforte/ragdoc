@@ -36,7 +36,7 @@ def extract_images(folder_path):
         if path.endswith(".pdf"):
             print(path)
             doc = fitz.Document(os.path.join(folder_path, path))
-            
+                                                
             for page_num in tqdm(range(len(doc)), desc="pages"):
                 img_num = 0
                 img_xrefs = []
@@ -50,11 +50,13 @@ def extract_images(folder_path):
 
                 #if img_num > 0:
                     # Get captions
-                pattern = re.compile(r'\n(Fig\.\s\d+.*?)\n', re.IGNORECASE)
+                pattern = re.compile(r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', re.IGNORECASE)
 
                 page = doc.load_page(page_num)
                 text = page.get_text("text")
                 
+                #TODO: Resolve mismatched captions such as when they reside on different pages
+
                 caption_num = 0
                 for match in pattern.findall(text):
                     img_xref = 0
