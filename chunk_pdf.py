@@ -41,29 +41,23 @@ def extract_images(folder_path):
                 img_num = 0
                 img_xrefs = []
 
-                for img in doc.get_page_images(page_num):
+                page = doc.load_page(page_num)
+
+                # temporary exit condition
+                # if page_num > 100:
+                #     exit()
+                
+                #for img in doc.get_page_images(page_num):
+                for img in page.get_images(full=True):
                     xref =img[0]                    
                     pix = fitz.Pixmap(doc, xref)
                     pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))
                     img_num += 1
                     img_xrefs.append(xref)
 
-                #if img_num > 0:
-                    # Get captions
+                    #img_bbox = page.get_image_bbox(img)
+
                 pattern = re.compile(r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', re.IGNORECASE)
-
-                page = doc.load_page(page_num)
-                # text_blocks = page.get_text("blocks")
-                # for idx, block in enumerate(text_blocks):
-                #     x0, y0, x1, y1, text, _, _, = block
-                #     print(f" - Block {idx + 1}: '{text.strip()}', Position: ({x0}, {y0}, {x1}, {y1})")
-
-                # for img in page.get_images(full=True):
-                #     xref = img[0]                    
-                #     img_bbox = page.get_image_bbox(img)
-                #     print(f" - Image XREF: {xref}, Position: {img_bbox}")
-
-                # text = page.get_text("text")
                 
                 #TODO: Resolve mismatched captions such as when they reside on different pages
 
@@ -84,10 +78,10 @@ def extract_images(folder_path):
                             file.write(caption)
                         caption_num += 1
 
-                    if caption_num != img_num:
-                        caption_path = os.path.join(folder_path, "images/" "caption_audit.txt")
-                        with open(caption_path, "a") as file:                        
-                            file.write("Page%d:\t%d Images,\t%d Captions\n" % (page_num, img_num, caption_num))
+                if caption_num != img_num:
+                    caption_path = os.path.join(folder_path, "images/" "caption_audit.txt")
+                    with open(caption_path, "a") as file:                        
+                        file.write("Page%d:\t%d Images,\t%d Captions\n" % (page_num, img_num, caption_num))
 
 
 
