@@ -53,27 +53,41 @@ def extract_images(folder_path):
                 pattern = re.compile(r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', re.IGNORECASE)
 
                 page = doc.load_page(page_num)
-                text = page.get_text("text")
+                # text_blocks = page.get_text("blocks")
+                # for idx, block in enumerate(text_blocks):
+                #     x0, y0, x1, y1, text, _, _, = block
+                #     print(f" - Block {idx + 1}: '{text.strip()}', Position: ({x0}, {y0}, {x1}, {y1})")
+
+                # for img in page.get_images(full=True):
+                #     xref = img[0]                    
+                #     img_bbox = page.get_image_bbox(img)
+                #     print(f" - Image XREF: {xref}, Position: {img_bbox}")
+
+                # text = page.get_text("text")
                 
                 #TODO: Resolve mismatched captions such as when they reside on different pages
 
                 caption_num = 0
-                for match in pattern.findall(text):
-                    img_xref = 0
-                    #temporary guard check
-                    if len(img_xrefs) > caption_num:
-                        img_xref = img_xrefs[caption_num]
+                text_blocks = page.get_text("blocks")
+                for idx, block in enumerate(text_blocks):
+                    x0, y0, x1, y1, text, _, _, = block
+                
+                    for match in pattern.findall(text):
+                        img_xref = 0
+                        #temporary guard check
+                        if len(img_xrefs) > caption_num:
+                            img_xref = img_xrefs[caption_num]
 
-                    caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xref))
-                    with open(caption_path, "w") as file:
-                        caption =match.strip()
-                        file.write(caption)
-                    caption_num += 1
+                        caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xref))
+                        with open(caption_path, "w") as file:
+                            caption = match.strip()
+                            file.write(caption)
+                        caption_num += 1
 
-                if caption_num != img_num:
-                    caption_path = os.path.join(folder_path, "images/" "caption_audit.txt")
-                    with open(caption_path, "a") as file:                        
-                        file.write("Page%d:\t%d Images,\t%dCaptions\n" % (page_num, img_num, caption_num))
+                    if caption_num != img_num:
+                        caption_path = os.path.join(folder_path, "images/" "caption_audit.txt")
+                        with open(caption_path, "a") as file:                        
+                            file.write("Page%d:\t%d Images,\t%d Captions\n" % (page_num, img_num, caption_num))
 
 
 
