@@ -39,27 +39,30 @@ def extract_images_and_captions(folder_path):
             for page_num in tqdm(range(len(doc)), desc="pages"):
                 page = doc.load_page(page_num)
                 
-                img_xrefs = []
-                img_xrefs = extract_images(page, folder_path, path, doc)
-                caption_num = extract_captions(page, img_xrefs, folder_path, path)
-                audit_log(caption_num, len(img_xrefs), folder_path, page_num)
+                images = []
+                images = extract_images(page, folder_path, path, doc)
+                caption_num = extract_captions(page, images, folder_path, path)
+                audit_log(caption_num, len(images), folder_path, page_num)
 
 def extract_images(page, folder_path, path, doc):    
-    img_xrefs = []
+    
+    page_images =  page.get_images(full=True)
+    images_with_bbox = []
 
     page_num = page.number
         
-    for img in page.get_images(full=True):
+    for img in page_images:
         xref =img[0]                    
         pix = fitz.Pixmap(doc, xref)
         pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))        
-        img_xrefs.append(xref)
+        
+        img_bbox = page.get_image_bbox(img)
 
-        #img_bbox = page.get_image_bbox(img)
+        images_with_bbox.append(img + (img_bbox,))
 
-    return img_xrefs
+    return images_with_bbox
 
-def extract_captions(page, img_xrefs, folder_path, path):
+def extract_captions(page, images, folder_path, path):
     pattern = re.compile(r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', re.IGNORECASE)
     
     #TODO: Resolve mismatched captions such as when they reside on different pages
@@ -73,8 +76,8 @@ def extract_captions(page, img_xrefs, folder_path, path):
         for match in pattern.findall(text):
             img_xref = 0
             #temporary guard check
-            if len(img_xrefs) > caption_num:
-                img_xref = img_xrefs[caption_num]
+            if len(images) > caption_num:
+                img_xref = images[caption_num][0]
 
             caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xref))
             with open(caption_path, "w") as file:
