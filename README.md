@@ -20,7 +20,7 @@ In progress
 
 ## Contributing
 
-In progress but will follow []()
+In progress but will follow [Contribution Guildlines](CONTRIBUTING.md)
 
 ## License
 
