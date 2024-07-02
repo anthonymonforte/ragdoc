@@ -35,7 +35,10 @@ def extract_images_and_captions(folder_path):
         if path.endswith(".pdf"):
             print(path)
             doc = fitz.Document(os.path.join(folder_path, path))
-                                                
+
+            doc_images = []
+            doc_captions = []
+
             for page_num in tqdm(range(len(doc)), desc="pages"):
                 page = doc.load_page(page_num)
                 
@@ -43,6 +46,9 @@ def extract_images_and_captions(folder_path):
                 page_captions = extract_captions(page, page_images, folder_path, path)
 
                 audit_log(len(page_captions), len(page_images), folder_path, page_num)
+
+                doc_images.append(page_images)
+                doc_captions.append(page_captions)
 
 def extract_images(page, folder_path, path, doc):    
     
@@ -52,17 +58,17 @@ def extract_images(page, folder_path, path, doc):
     page_num = page.number
         
     for img in page_images:
-        xref =img[0]                    
-        pix = fitz.Pixmap(doc, xref)
-        pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))        
+        #xref =img[0]                    
+        #pix = fitz.Pixmap(doc, xref)
+        #pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))        
         
         img_bbox = page.get_image_bbox(img)
-
         images_with_bbox.append(img + (img_bbox,page_num,))
 
     return images_with_bbox
 
 def extract_captions(page, images, folder_path, path):
+    
     pattern = re.compile(r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', re.IGNORECASE)
     
     #TODO: Resolve mismatched captions such as when they reside on different pages
@@ -77,16 +83,17 @@ def extract_captions(page, images, folder_path, path):
         x0, y0, x1, y1, text, _, _, = block
     
         for match in pattern.findall(text):
-            img_xref = 0
-            #temporary guard check
-            if len(images) > caption_num:
-                img_xref = images[caption_num][0]
+            # img_xref = 0
+            # #temporary guard check
+            # if len(images) > caption_num:
+            #     img_xref = images[caption_num][0]
 
-            caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xref))
-            with open(caption_path, "w") as file:
-                caption = match.strip()
-                file.write(caption)
-            caption_num += 1
+            # caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xref))
+            # with open(caption_path, "w") as file:
+            #     caption = match.strip()
+            #     file.write(caption)
+            # caption_num += 1
+
             page_captions.append((text,y0,page_num))
     
     return page_captions
