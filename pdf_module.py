@@ -1,10 +1,11 @@
+import os
 import argparse
+import re
+
 from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import fitz
-import os
 from tqdm import tqdm
-import re
 
 def main():
 
