@@ -39,10 +39,10 @@ def extract_images_and_captions(folder_path):
             for page_num in tqdm(range(len(doc)), desc="pages"):
                 page = doc.load_page(page_num)
                 
-                images = []
-                images = extract_images(page, folder_path, path, doc)
-                caption_num = extract_captions(page, images, folder_path, path)
-                audit_log(caption_num, len(images), folder_path, page_num)
+                page_images = extract_images(page, folder_path, path, doc)
+                page_captions = extract_captions(page, page_images, folder_path, path)
+
+                audit_log(len(page_captions), len(page_images), folder_path, page_num)
 
 def extract_images(page, folder_path, path, doc):    
     
@@ -58,7 +58,7 @@ def extract_images(page, folder_path, path, doc):
         
         img_bbox = page.get_image_bbox(img)
 
-        images_with_bbox.append(img + (img_bbox,))
+        images_with_bbox.append(img + (img_bbox,page_num,))
 
     return images_with_bbox
 
@@ -67,9 +67,12 @@ def extract_captions(page, images, folder_path, path):
     
     #TODO: Resolve mismatched captions such as when they reside on different pages
     
+    page_captions= []
+
     page_num = page.number
     caption_num = 0
     text_blocks = page.get_text("blocks")
+
     for idx, block in enumerate(text_blocks):
         x0, y0, x1, y1, text, _, _, = block
     
@@ -84,8 +87,9 @@ def extract_captions(page, images, folder_path, path):
                 caption = match.strip()
                 file.write(caption)
             caption_num += 1
+            page_captions.append((text,y0,page_num))
     
-    return caption_num
+    return page_captions
 
 def audit_log(caption_num, img_num, folder_path, page_num):
     if caption_num != img_num:
