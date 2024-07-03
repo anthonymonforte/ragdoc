@@ -8,6 +8,7 @@ import os
 import argparse
 import re
 
+from dataclasses import dataclass
 from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import fitz
@@ -46,16 +47,32 @@ def extract_images_and_captions(folder_path):
             doc_images = []
             doc_captions = []
 
+
+
             for page_num in tqdm(range(len(doc)), desc="pages"):
                 page = doc.load_page(page_num)
 
                 page_images = extract_images(page, folder_path, path, doc)
                 page_captions = extract_captions(page, page_images, folder_path, path)
 
+                stitch_images_and_captions(page_images, page_captions, doc_images)
+
                 audit_log(len(page_captions), len(page_images), folder_path, page_num)
 
                 doc_images.append(page_images)
                 doc_captions.append(page_captions)
+
+@dataclass
+class PdfImage:
+    image: any
+    page: int
+    caption_resolved: bool
+    caption: str
+
+
+def stitch_images_and_captions(page_images, page_captions, doc_images):
+    stitched_images: PdfImage =  []
+    return stitched_images
 
 def extract_images(page, folder_path, path, doc):
 
