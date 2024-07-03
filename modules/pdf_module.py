@@ -56,7 +56,7 @@ def extract_images_and_captions(folder_path):
                 page_images = extract_images(page, folder_path, path, doc)
                 page_captions = extract_captions(page, page_images, folder_path, path)
 
-                stitch_images_and_captions(page_images, page_captions, doc_images)
+                stitch_images_and_captions(page_num, page_images, page_captions, doc_images)
 
                 audit_log(len(page_captions), len(page_images), folder_path, page_num)
 
@@ -65,20 +65,23 @@ def extract_images_and_captions(folder_path):
 
 @dataclass
 class PdfImage:
-    image: any
-    page: int
+    image_xref: any
+    image_y1: int
+    image_page: int
     caption_resolved: bool
-    caption: str
+    # caption_text: str
+    # caption_y1: int
+    # caption_page: int
 
 
-def stitch_images_and_captions(page_images, page_captions, doc_images):
+def stitch_images_and_captions(page_num, page_images, page_captions, doc_images):
     stitched_images: PdfImage =  []
     return stitched_images
 
 def extract_images(page, folder_path, path, doc):
 
     page_images =  page.get_images(full=True)
-    images_with_bbox = []
+    pdf_images: PdfImage = []
 
     page_num = page.number
 
@@ -88,9 +91,12 @@ def extract_images(page, folder_path, path, doc):
         #pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))
 
         img_bbox = page.get_image_bbox(img)
-        images_with_bbox.append(img + (img_bbox,page_num,))
+        pdf_images.append(PdfImage(image_xref = img[0],
+                                    image_y1 = img_bbox[3],
+                                    image_page = page_num,
+                                    caption_resolved=False))
 
-    return images_with_bbox
+    return pdf_images
 
 def extract_captions(page, images, folder_path, path):
 
