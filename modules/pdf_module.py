@@ -3,6 +3,7 @@
 # pylint: disable=W0613
 # pylint: disable=C0116
 # pylint: disable=C0301
+# pylint: disable=C0115
 
 import os
 import argparse
