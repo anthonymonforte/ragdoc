@@ -15,6 +15,11 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import fitz
 from tqdm import tqdm
 
+@dataclass
+class ChunkConfig:
+    chunk_size: int
+    chunk_overlap: int
+
 def main():
 
     arg_parser = argparse.ArgumentParser()
@@ -23,15 +28,15 @@ def main():
 
     print(args.p)
 
-    #extract_text_chunks(args.p)
+    #extract_text_chunks(args.p, ChunkConfig(chunk_size=800, chunk_overlap=80))
     extract_images_and_captions(args.p)
 
-def extract_text_chunks(folder_path):
+def extract_text_chunks(folder_path, config):
     doc_loader = PyPDFDirectoryLoader(folder_path)
     docs = doc_loader.load()
     chunkifier = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=80,
+        config.chunk_size,
+        config.chunk_overlap,
         length_function=len,
         is_separator_regex=False
     )
