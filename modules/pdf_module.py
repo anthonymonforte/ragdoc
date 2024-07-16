@@ -20,10 +20,9 @@ class ChunkConfig:
     chunk_size: int
     chunk_overlap: int
 
-caption_regex: string
+CAPTION_REGEX = r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)'
 
 def main():
-    caption_regex=r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)'
 
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-p", required=True, help="PDF folder")
@@ -106,7 +105,7 @@ def extract_images(page, folder_path, path, doc):
 
 def extract_captions(page, images, folder_path, path):
 
-    pattern = re.compile(caption_regex, re.IGNORECASE)
+    pattern = re.compile(CAPTION_REGEX, re.IGNORECASE)
 
     #Resolve mismatched captions such as when they reside on different pages
 
