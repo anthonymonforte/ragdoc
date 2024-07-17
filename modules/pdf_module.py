@@ -61,7 +61,8 @@ def extract_images_and_captions(folder_path):
                 page_images = extract_images(page, folder_path, path, doc)
                 page_captions = extract_captions(page, page_images, folder_path, path)
 
-                stitch_images_and_captions(page_num, page_images, page_captions, doc_images)
+                if len(page_images) > 0 and len(page_captions) > 0:
+                    stitch_images_and_captions(page_num, page_images, page_captions, doc_images)
 
                 audit_log(len(page_captions), len(page_images), folder_path, page_num)
 
@@ -80,8 +81,10 @@ class PdfImage:
 
 
 def stitch_images_and_captions(page_num, page_images, page_captions, doc_images):
-    stitched_images: PdfImage =  []
-    return stitched_images
+    page_images_and_captions = [{'y_pos': img.image_y1, 'type': 'image'} for img in page_images] + [{'y_pos': caption[1], 'type': 'caption'} for caption in page_captions]
+
+    sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: x['y_pos'])
+    return sorted_by_y_pos
 
 def extract_images(page, folder_path, path, doc):
 
