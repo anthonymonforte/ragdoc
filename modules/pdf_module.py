@@ -54,7 +54,8 @@ def extract_images_and_captions(folder_path):
             doc = fitz.Document(os.path.join(folder_path, path))
 
             doc_images = []
-            #doc_captions = []
+            unresolved_captions = []
+            unresolved_captions.clear()
 
             for page_num in tqdm(range(len(doc)), desc="pages"):
                 page = doc.load_page(page_num)
@@ -63,7 +64,7 @@ def extract_images_and_captions(folder_path):
                 page_captions = extract_captions(page, page_images, folder_path, path)
 
                 if len(page_images) > 0 and len(page_captions) > 0:
-                    stitch_images_and_captions(page_num, page_images, page_captions, doc_images)
+                    stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions)
 
                 audit_log(len(page_captions), len(page_images), folder_path, page_num)
 
@@ -84,20 +85,28 @@ class PdfImage:
     image_page: int
     caption: Caption
 
-def stitch_images_and_captions(page_num, page_images, page_captions, doc_images):
-    page_images_and_captions = [{'y_pos': img.image_y1, 'type': 'image', 'image': img} for img in page_images] + [{'y_pos': caption.caption_y0, 'caption': caption, 'type': 'caption'} for caption in page_captions]
+def stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions):
+    page_images_and_captions = [{'y_pos': img.image_y1, 'page': img.image_page, 'type': 'image', 'image': img} for img in page_images] + [{'y_pos': caption.caption_y0, 'page': caption.caption_page, 'caption': caption, 'type': 'caption'} for caption in page_captions] + unresolved_captions
 
-    sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: x['y_pos'], reverse=CAPTION_ABOVE_IMG)
+    sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (x['page'], x['y_pos']), reverse=CAPTION_ABOVE_IMG)
 
-    unresolved_captions = []
+    wip_list = []
+    new_unresolved_captions = []
 
     for item in sorted_by_y_pos:
         if item['type'] == 'image':
-            doc_images.append(item['image'])
-        elif len(doc_images) > 0 and doc_images[-1].caption is None:
-            doc_images[-1].caption = item['caption']
+            wip_list.append(item['image'])
+        elif len(wip_list) > 0 and wip_list[-1].caption is None:
+            wip_list[-1].caption = item['caption']
+            unresolved_captions.clear()
         else:
-            unresolved_captions.append(item['caption']) # Properly resolve dangling captions
+            new_unresolved_captions.append(item)
+
+    if CAPTION_ABOVE_IMG is True:
+        wip_list.reverse()
+
+    doc_images.append(wip_list)
+    unresolved_captions = unresolved_captions + new_unresolved_captions
 
 def extract_images(page, folder_path, path, doc):
 
