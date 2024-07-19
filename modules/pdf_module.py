@@ -4,6 +4,7 @@
 # pylint: disable=C0116
 # pylint: disable=C0301
 # pylint: disable=C0115
+# pylint: disable=W0511
 
 import os
 import argparse
@@ -57,16 +58,17 @@ def extract_images_and_captions(folder_path):
             unresolved_captions = []
             unresolved_captions.clear()
 
-            for page_num in tqdm(range(len(doc)), desc="pages"):
+            page_numbers = tqdm(range(len(doc)), desc="pages")
+            for page_num in page_numbers:
                 page = doc.load_page(page_num)
 
                 page_images = extract_images(page, folder_path, path, doc)
                 page_captions = extract_captions(page, page_images, folder_path, path)
 
-                if len(page_images) > 0 and len(page_captions) > 0:
+                if len(page_images) > 0 or len(page_captions) > 0:
                     stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions)
 
-                audit_log(len(page_captions), len(page_images), folder_path, page_num)
+            audit_log(doc, doc_images, folder_path)
 
                 #doc_images.append(page_images)
                 #doc_captions.append(page_captions)
@@ -88,7 +90,7 @@ class PdfImage:
 def stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions):
     page_images_and_captions = [{'y_pos': img.image_y1, 'page': img.image_page, 'type': 'image', 'image': img} for img in page_images] + [{'y_pos': caption.caption_y0, 'page': caption.caption_page, 'caption': caption, 'type': 'caption'} for caption in page_captions] + unresolved_captions
 
-    sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (x['page'], x['y_pos']), reverse=CAPTION_ABOVE_IMG)
+    sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (-x['page'], x['y_pos']), reverse=CAPTION_ABOVE_IMG)
 
     wip_list = []
     new_unresolved_captions = []
@@ -96,17 +98,22 @@ def stitch_images_and_captions(page_images, page_captions, doc_images, unresolve
     for item in sorted_by_y_pos:
         if item['type'] == 'image':
             wip_list.append(item['image'])
-        elif len(wip_list) > 0 and wip_list[-1].caption is None:
-            wip_list[-1].caption = item['caption']
-            unresolved_captions.clear()
+        elif len(wip_list) > 0:
+            if wip_list[-1].caption is None:
+                wip_list[-1].caption = item['caption']
+                unresolved_captions.clear()
+            else:
+                new_unresolved_captions.append(item)
+        elif len(doc_images) > 0 and doc_images[-1].caption is None:
+            doc_images[-1].caption = item['caption']
         else:
             new_unresolved_captions.append(item)
 
     if CAPTION_ABOVE_IMG is True:
         wip_list.reverse()
 
-    doc_images.append(wip_list)
-    unresolved_captions = unresolved_captions + new_unresolved_captions
+    doc_images.extend(wip_list)
+    unresolved_captions.extend(new_unresolved_captions)
 
 def extract_images(page, folder_path, path, doc):
 
@@ -115,12 +122,14 @@ def extract_images(page, folder_path, path, doc):
 
     page_num = page.number
 
+    #image_bboxes = []
     for img in page_images:
         #xref =img[0]
         #pix = fitz.Pixmap(doc, xref)
         #pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))
 
         img_bbox = page.get_image_bbox(img)
+        #image_bboxes.append(img_bbox)   #TODO: use this information to combine images that have been broken apart
         pdf_images.append(PdfImage(image_xref = img[0],
                                     image_y1 = img_bbox[3],
                                     image_page = page_num,
@@ -161,13 +170,28 @@ def extract_captions(page, images, folder_path, path):
 
     return page_captions
 
-def audit_log(caption_num, img_num, folder_path, page_num):
+def audit_log(doc, doc_images, folder_path):
     """Function logging mismatch between images and captions."""
+    caption_path = os.path.join(folder_path, "images/", "caption_audit.txt")
+    log_path = os.path.join(folder_path, "images/", "log.txt")
 
-    if caption_num != img_num:
-        caption_path = os.path.join(folder_path, "images/", "caption_audit.txt")
-        with open(caption_path, "a", encoding="utf-8") as file:
-            file.write(f"Page{page_num}:\t{img_num} Images,\t{caption_num} Captions\n")
+    img_num = 1
+    for doc_image in doc_images:
+        if doc_image.caption is None:
+            with open(caption_path, "a", encoding="utf-8") as file:
+                file.write(f"Page {doc_image.image_page}:\tImage {img_num}\n")
+
+            xref = doc_image.image_xref
+            pix = fitz.Pixmap(doc, xref)
+            pix.save(os.path.join(folder_path, "images/", f"p{xref}-{doc_image.image_page}.png"))
+
+        with open(log_path, "a", encoding="utf-8") as log:
+            caption_text = ''
+            if doc_image.caption is not None:
+                caption_text = doc_image.caption.caption_text
+            log.write(f"Page {doc_image.image_page}:\tImage {img_num}\t{caption_text}\n")
+
+        img_num += 1
 
 if __name__ == "__main__":
     main()
