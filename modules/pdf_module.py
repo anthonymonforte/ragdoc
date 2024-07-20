@@ -10,6 +10,7 @@ import os
 import argparse
 import re
 
+from typing import List
 from dataclasses import dataclass
 from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -23,6 +24,7 @@ class ChunkConfig:
 
 CAPTION_REGEX = r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)'
 CAPTION_ABOVE_IMG = False
+IMAGE_OFFSET_THRESHOLD = 0.5
 
 def main():
 
@@ -81,14 +83,19 @@ class Caption:
     caption_page: int
 
 @dataclass
+class ImagePart:
+    xref: any
+    bbox: any
+
+@dataclass
 class PdfImage:
-    image_xref: any
-    image_y1: int
+    image_parts: List[ImagePart]
+    image_bbox: any
     image_page: int
     caption: Caption
 
 def stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions):
-    page_images_and_captions = [{'y_pos': img.image_y1, 'page': img.image_page, 'type': 'image', 'image': img} for img in page_images] + [{'y_pos': caption.caption_y0, 'page': caption.caption_page, 'caption': caption, 'type': 'caption'} for caption in page_captions] + unresolved_captions
+    page_images_and_captions = [{'y_pos': img.image_bbox[3], 'page': img.image_page, 'type': 'image', 'image': img} for img in page_images] + [{'y_pos': caption.caption_y0, 'page': caption.caption_page, 'caption': caption, 'type': 'caption'} for caption in page_captions] + unresolved_captions
 
     sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (-x['page'], x['y_pos']), reverse=CAPTION_ABOVE_IMG)
 
@@ -129,13 +136,29 @@ def extract_images(page, folder_path, path, doc):
         #pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))
 
         img_bbox = page.get_image_bbox(img)
+
         #image_bboxes.append(img_bbox)   #TODO: use this information to combine images that have been broken apart
-        pdf_images.append(PdfImage(image_xref = img[0],
-                                    image_y1 = img_bbox[3],
+        pdf_images.append(PdfImage(image_bbox = img_bbox,
                                     image_page = page_num,
+                                    image_parts = [ImagePart(xref=img[0], bbox=img_bbox)],
                                     caption = None))
 
-    return pdf_images
+    return combine_images(pdf_images)
+
+def combine_images(images: List[PdfImage]):
+    if len(images) < 2:
+        return images
+
+    sorted_by_y0 = sorted(images, key=lambda x: (x.image_bbox[1]))
+
+    final_list = []
+    for img in sorted_by_y0:
+        if len(final_list) < 1 or ((final_list[-1].image_parts[-1].bbox[3] + IMAGE_OFFSET_THRESHOLD) < img.image_bbox[1]):
+            final_list.append(img)
+        else:
+            final_list[-1].image_parts.append(img.image_parts[-1])
+
+    return final_list
 
 def extract_captions(page, images, folder_path, path):
 
@@ -181,7 +204,7 @@ def audit_log(doc, doc_images, folder_path):
             with open(caption_path, "a", encoding="utf-8") as file:
                 file.write(f"Page {doc_image.image_page}:\tImage {img_num}\n")
 
-            xref = doc_image.image_xref
+            xref = doc_image.image_parts[-1].xref
             pix = fitz.Pixmap(doc, xref)
             pix.save(os.path.join(folder_path, "images/", f"p{xref}-{doc_image.image_page}.png"))
 
