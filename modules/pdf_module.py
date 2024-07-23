@@ -35,7 +35,7 @@ def main():
     print(args.p)
 
     #extract_text_chunks(args.p, ChunkConfig(chunk_size=800, chunk_overlap=80))
-    extract_images_and_captions(args.p)
+    extract_images_and_captions_from_folder(args.p)
 
 def extract_text_chunks(folder_path, config):
     doc_loader = PyPDFDirectoryLoader(folder_path)
@@ -50,30 +50,34 @@ def extract_text_chunks(folder_path, config):
     chunks = chunkifier.split_documents(docs)
     print("Chunks: ", len(chunks))
 
-def extract_images_and_captions(folder_path):
+def extract_images_and_captions_from_folder(folder_path):
     for path in os.listdir(folder_path):
         if path.endswith(".pdf"):
             print(path)
-            doc = fitz.Document(os.path.join(folder_path, path))
+            doc_path = os.path.join(folder_path, path)
+            extract_images_and_captions_from_doc(doc_path, True)
 
-            doc_images = []
-            unresolved_captions = []
-            unresolved_captions.clear()
+def extract_images_and_captions_from_doc(doc_path: str, perform_audit: bool):
+    doc = fitz.Document(doc_path)
 
-            page_numbers = tqdm(range(len(doc)), desc="pages")
-            for page_num in page_numbers:
-                page = doc.load_page(page_num)
+    doc_images = []
+    unresolved_captions = []
+    unresolved_captions.clear()
 
-                page_images = extract_images(page, folder_path, path, doc)
-                page_captions = extract_captions(page, page_images, folder_path, path)
+    page_numbers = tqdm(range(len(doc)), desc="pages")
+    for page_num in page_numbers:
+        page = doc.load_page(page_num)
 
-                if len(page_images) > 0 or len(page_captions) > 0:
-                    stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions)
+        page_images = extract_images(page)
+        page_captions = extract_captions(page)
 
-            audit_log(doc, doc_images, folder_path)
+        if len(page_images) > 0 or len(page_captions) > 0:
+            stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions)
 
-                #doc_images.append(page_images)
-                #doc_captions.append(page_captions)
+    if perform_audit:
+        audit_log(doc, doc_images, os.path.dirname(doc_path))
+
+    return doc_images
 
 
 @dataclass
@@ -122,7 +126,7 @@ def stitch_images_and_captions(page_images, page_captions, doc_images, unresolve
     doc_images.extend(wip_list)
     unresolved_captions.extend(new_unresolved_captions)
 
-def extract_images(page, folder_path, path, doc):
+def extract_images(page):
 
     page_images =  page.get_images(full=True)
     pdf_images: PdfImage = []
@@ -160,7 +164,7 @@ def combine_images(images: List[PdfImage]):
 
     return final_list
 
-def extract_captions(page, images, folder_path, path):
+def extract_captions(page):
 
     pattern = re.compile(CAPTION_REGEX, re.IGNORECASE)
 
