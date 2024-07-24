@@ -13,7 +13,10 @@ import re
 from typing import List
 from dataclasses import dataclass
 from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+
 import fitz
 from tqdm import tqdm
 
@@ -219,6 +222,10 @@ def audit_log(doc, doc_images, folder_path):
             log.write(f"Page {doc_image.image_page}:\tImage {img_num}\t{caption_text}\n")
 
         img_num += 1
+
+def embedding_function():
+    embeddings = OllamaEmbeddings(model="llama3:8b")
+    return embeddings
 
 if __name__ == "__main__":
     main()
