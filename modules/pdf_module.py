@@ -131,7 +131,8 @@ def stitch_images_and_captions(page_images, page_captions, doc_images, unresolve
 
 def extract_images(page):
 
-    page_images =  page.get_images(full=True)
+    page_images = page.get_image_info(hashes=True, xrefs=True)
+
     pdf_images: PdfImage = []
 
     page_num = page.number
@@ -141,13 +142,11 @@ def extract_images(page):
         #xref =img[0]
         #pix = fitz.Pixmap(doc, xref)
         #pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))
-
-        img_bbox = page.get_image_bbox(img)
-
+        
         #image_bboxes.append(img_bbox)   #TODO: use this information to combine images that have been broken apart
-        pdf_images.append(PdfImage(image_bbox = img_bbox,
+        pdf_images.append(PdfImage(image_bbox = img['bbox'],
                                     image_page = page_num,
-                                    image_parts = [ImagePart(xref=img[0], bbox=img_bbox)],
+                                    image_parts = [ImagePart(xref=img['xref'], bbox=img['bbox'])],
                                     caption = None))
 
     return combine_images(pdf_images)
