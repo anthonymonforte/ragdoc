@@ -142,7 +142,7 @@ def extract_images(page):
         #xref =img[0]
         #pix = fitz.Pixmap(doc, xref)
         #pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))
-        
+
         #image_bboxes.append(img_bbox)   #TODO: use this information to combine images that have been broken apart
         pdf_images.append(PdfImage(image_bbox = img['bbox'],
                                     image_page = page_num,
