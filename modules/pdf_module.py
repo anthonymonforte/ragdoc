@@ -29,6 +29,12 @@ CAPTION_REGEX = r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)'
 CAPTION_ABOVE_IMG = False
 IMAGE_OFFSET_THRESHOLD = 0.5
 
+@dataclass
+class Config:
+    folder_path: str
+    caption_above_img: bool
+    perform_audit: bool
+
 def main():
 
     arg_parser = argparse.ArgumentParser()
@@ -37,8 +43,10 @@ def main():
 
     print(args.p)
 
+    config = Config(folder_path=args.p, caption_above_img=CAPTION_ABOVE_IMG, perform_audit=True)
+
     #extract_text_chunks(args.p, ChunkConfig(chunk_size=800, chunk_overlap=80))
-    extract_images_and_captions_from_folder(args.p)
+    extract_images_and_captions_from_folder(config)
 
 def extract_text_chunks(folder_path, config):
     doc_loader = PyPDFDirectoryLoader(folder_path)
@@ -53,14 +61,14 @@ def extract_text_chunks(folder_path, config):
     chunks = chunkifier.split_documents(docs)
     print("Chunks: ", len(chunks))
 
-def extract_images_and_captions_from_folder(folder_path):
-    for path in os.listdir(folder_path):
+def extract_images_and_captions_from_folder(config):
+    for path in os.listdir(config.folder_path):
         if path.endswith(".pdf"):
             print(path)
-            doc_path = os.path.join(folder_path, path)
-            extract_images_and_captions_from_doc(doc_path, True)
+            doc_path = os.path.join(config.folder_path, path)
+            extract_images_and_captions_from_doc(doc_path, config)
 
-def extract_images_and_captions_from_doc(doc_path: str, perform_audit: bool):
+def extract_images_and_captions_from_doc(doc_path: str, config: Config):
     doc = fitz.Document(doc_path)
 
     doc_images = []
@@ -75,9 +83,9 @@ def extract_images_and_captions_from_doc(doc_path: str, perform_audit: bool):
         page_captions = extract_captions(page)
 
         if len(page_images) > 0 or len(page_captions) > 0:
-            stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions)
+            stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions, config)
 
-    if perform_audit:
+    if config.perform_audit:
         audit_log(doc, doc_images, os.path.dirname(doc_path))
 
     return doc_images
@@ -101,10 +109,13 @@ class PdfImage:
     image_page: int
     caption: Caption
 
-def stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions):
+def stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions, config: Config):
     page_images_and_captions = [{'y_pos': img.image_bbox[3], 'page': img.image_page, 'type': 'image', 'image': img} for img in page_images] + [{'y_pos': caption.caption_y0, 'page': caption.caption_page, 'caption': caption, 'type': 'caption'} for caption in page_captions] + unresolved_captions
 
-    sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (-x['page'], x['y_pos']), reverse=CAPTION_ABOVE_IMG)
+    if not config.caption_above_img:
+        sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (-x['page'], x['y_pos']), reverse=config.caption_above_img)
+    else:
+        sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (x['page'], x['y_pos']), reverse=config.caption_above_img)
 
     wip_list = []
     new_unresolved_captions = []
