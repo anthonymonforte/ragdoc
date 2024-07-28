@@ -25,25 +25,33 @@ class ChunkConfig:
     chunk_size: int
     chunk_overlap: int
 
-CAPTION_REGEX = r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)'
+# CAPTION_REGEX = r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)'
 CAPTION_ABOVE_IMG = False
-IMAGE_OFFSET_THRESHOLD = 0.5
+# IMAGE_OFFSET_THRESHOLD = 0.5
 
 @dataclass
 class Config:
     folder_path: str
     caption_above_img: bool
     perform_audit: bool
+    caption_regex: str
+    image_part_offset_threshold: float
 
 def main():
 
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-p", required=True, help="PDF folder")
+    arg_parser.add_argument("-r", required=False, help="Caption Regular Expression", default="(?:\\n|^)(Fig\\.\\s\\d+.*?)(?:\\n|$)")
+    arg_parser.add_argument("-o", required=False, help="Image Part Offset Threshold", default=.5)
+    arg_parser.add_argument("-a", required=False, help="Perform caption to image audit", default=True)
     args = arg_parser.parse_args()
 
     print(args.p)
+    print(args.r)
+    print(args.o)
+    print(args.a)
 
-    config = Config(folder_path=args.p, caption_above_img=CAPTION_ABOVE_IMG, perform_audit=True)
+    config = Config(folder_path=args.p, caption_above_img=CAPTION_ABOVE_IMG, perform_audit=args.a, caption_regex=args.r, image_part_offset_threshold=args.o)
 
     #extract_text_chunks(args.p, ChunkConfig(chunk_size=800, chunk_overlap=80))
     extract_images_and_captions_from_folder(config)
@@ -79,8 +87,8 @@ def extract_images_and_captions_from_doc(doc_path: str, config: Config):
     for page_num in page_numbers:
         page = doc.load_page(page_num)
 
-        page_images = extract_images(page)
-        page_captions = extract_captions(page)
+        page_images = extract_images(page, config)
+        page_captions = extract_captions(page, config)
 
         if len(page_images) > 0 or len(page_captions) > 0:
             stitch_images_and_captions(page_images, page_captions, doc_images, unresolved_captions, config)
@@ -140,7 +148,7 @@ def stitch_images_and_captions(page_images, page_captions, doc_images, unresolve
     doc_images.extend(wip_list)
     unresolved_captions.extend(new_unresolved_captions)
 
-def extract_images(page):
+def extract_images(page, config: Config):
 
     page_images = page.get_image_info(hashes=True, xrefs=True)
 
@@ -160,9 +168,9 @@ def extract_images(page):
                                     image_parts = [ImagePart(xref=img['xref'], bbox=img['bbox'])],
                                     caption = None))
 
-    return combine_images(pdf_images)
+    return combine_images(pdf_images, config)
 
-def combine_images(images: List[PdfImage]):
+def combine_images(images: List[PdfImage], config: Config):
     if len(images) < 2:
         return images
 
@@ -170,16 +178,16 @@ def combine_images(images: List[PdfImage]):
 
     final_list = []
     for img in sorted_by_y0:
-        if len(final_list) < 1 or ((final_list[-1].image_parts[-1].bbox[3] + IMAGE_OFFSET_THRESHOLD) < img.image_bbox[1]):
+        if len(final_list) < 1 or ((final_list[-1].image_parts[-1].bbox[3] + config.image_part_offset_threshold) < img.image_bbox[1]):
             final_list.append(img)
         else:
             final_list[-1].image_parts.append(img.image_parts[-1])
 
     return final_list
 
-def extract_captions(page):
+def extract_captions(page, config: Config):
 
-    pattern = re.compile(CAPTION_REGEX, re.IGNORECASE)
+    pattern = re.compile(config.caption_regex, re.IGNORECASE)
 
     #Resolve mismatched captions such as when they reside on different pages
 

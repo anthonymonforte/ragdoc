@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import modules.pdf_module as pdf
 
 def get_default_config():
-    return pdf.Config(folder_path=os.path.dirname(__file__), caption_above_img=False, perform_audit=False)
+    return pdf.Config(folder_path=os.path.dirname(__file__), caption_above_img=False, perform_audit=False, caption_regex=r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', image_part_offset_threshold=.5)
 
 
 def test_extract_images_and_captions_from_pdf_1_image_bottom_caption_test():
