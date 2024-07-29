@@ -22,10 +22,13 @@ def create_pdf_image_obj(image_bbox: List[float], page: int, xref: int):
 def get_default_config():
     return pdf.Config(folder_path=os.path.dirname(__file__), caption_above_img=False, perform_audit=False, caption_regex=r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', image_part_offset_threshold=.5)
 
+def get_default_pdf_module():
+    return pdf.PdfDocProcessor(get_default_config())
+
 def test_combine_images_should_not_combine_separate_images():
     image_list = [create_pdf_image_obj([0,0,0,5], 1, 1),
                   create_pdf_image_obj([0,10,0,15], 1, 2)]
-    result = pdf.combine_images(image_list, get_default_config())
+    result = get_default_pdf_module().combine_images(image_list)
     assert len(result) == 2
     assert len(result[0].image_parts) == 1
     assert len(result[1].image_parts) == 1
@@ -34,7 +37,7 @@ def test_combine_images_should_not_combine_separate_images():
 def test_combine_images_should_combine_image_parts():
     image_list = [create_pdf_image_obj([0,0,0,5], 1, 1),
                   create_pdf_image_obj([0,5,0,15], 1, 2)]
-    result = pdf.combine_images(image_list, get_default_config())
+    result = get_default_pdf_module().combine_images(image_list)
     assert len(result) == 1
     assert len(result[0].image_parts) == 2
 
@@ -43,7 +46,7 @@ def test_combine_images_should_combine_image_parts_within_threshold():
 
     image_list = [create_pdf_image_obj([0,0,0,5], 1, 1),
                   create_pdf_image_obj([0,5 + config.image_part_offset_threshold,0,15], 1, 2)]
-    result = pdf.combine_images(image_list, config)
+    result = get_default_pdf_module().combine_images(image_list)
     assert len(result) == 1
     assert len(result[0].image_parts) == 2
 
@@ -52,7 +55,7 @@ def test_combine_images_should_not_combine_image_parts_outside_threshold():
 
     image_list = [create_pdf_image_obj([0,0,0,5], 1, 1),
                   create_pdf_image_obj([0,5 + config.image_part_offset_threshold + .01,0,15], 1, 2)]
-    result = pdf.combine_images(image_list, config)
+    result = get_default_pdf_module().combine_images(image_list)
     assert len(result) == 2
     assert len(result[0].image_parts) == 1
     assert len(result[1].image_parts) == 1

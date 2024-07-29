@@ -16,9 +16,11 @@ import modules.pdf_module as pdf
 def get_default_config():
     return pdf.Config(folder_path=os.path.dirname(__file__), caption_above_img=False, perform_audit=False, caption_regex=r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)', image_part_offset_threshold=.5)
 
+def get_default_pdf_module():
+    return pdf.PdfDocProcessor(get_default_config())
 
 def test_extract_images_and_captions_from_pdf_1_image_bottom_caption_test():
-    doc_images = pdf.extract_images_and_captions_from_doc(os.path.join(os.path.dirname(__file__), "test_assets/pdfs/pdf_1_image_bottom_caption_test.pdf"), get_default_config())
+    doc_images = get_default_pdf_module().extract_images_and_captions_from_doc(os.path.join(os.path.dirname(__file__), "test_assets/pdfs/pdf_1_image_bottom_caption_test.pdf"))
 
     assert len(doc_images) == 1
     pdf_image = doc_images[0]
@@ -28,7 +30,7 @@ def test_extract_images_and_captions_from_pdf_1_image_bottom_caption_test():
     assert pdf_image.caption.caption_text == "Fig. 1 This is a caption. \n"
 
 def test_extract_images_and_captions_from_pdf_2_images_one_bottom_caption_and_page_break_test():
-    doc_images = pdf.extract_images_and_captions_from_doc(os.path.join(os.path.dirname(__file__), "test_assets/pdfs/pdf_2_images_one_bottom_caption_and_page_break_test.pdf"), get_default_config())
+    doc_images = get_default_pdf_module().extract_images_and_captions_from_doc(os.path.join(os.path.dirname(__file__), "test_assets/pdfs/pdf_2_images_one_bottom_caption_and_page_break_test.pdf"))
 
     assert len(doc_images) == 2
 
@@ -44,7 +46,7 @@ def test_extract_images_and_captions_from_pdf_2_images_one_bottom_caption_and_pa
 def test_extract_images_and_captions_from_pdf_2_images_top_captions_and_page_break():
     config = get_default_config()
     config.caption_above_img = True
-    doc_images = pdf.extract_images_and_captions_from_doc(os.path.join(os.path.dirname(__file__), "test_assets/pdfs/pdf_2_images_top_captions_and_page_break.pdf"), config)
+    doc_images = pdf.PdfDocProcessor(config).extract_images_and_captions_from_doc(os.path.join(os.path.dirname(__file__), "test_assets/pdfs/pdf_2_images_top_captions_and_page_break.pdf"))
 
     assert len(doc_images) == 2
 
