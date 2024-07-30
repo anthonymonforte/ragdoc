@@ -26,7 +26,7 @@ class ChunkConfig:
     chunk_overlap: int
 
 # CAPTION_REGEX = r'(?:\n|^)(Fig\.\s\d+.*?)(?:\n|$)'
-CAPTION_ABOVE_IMG = False
+#CAPTION_ABOVE_IMG = False
 # IMAGE_OFFSET_THRESHOLD = 0.5
 
 @dataclass
@@ -62,14 +62,16 @@ def main():
     arg_parser.add_argument("-r", required=False, help="Caption Regular Expression", default="(?:\\n|^)(Fig\\.\\s\\d+.*?)(?:\\n|$)")
     arg_parser.add_argument("-o", required=False, help="Image Part Offset Threshold", default=.5)
     arg_parser.add_argument("-a", required=False, help="Perform caption to image audit", default=True)
+    arg_parser.add_argument("-cap_pos", required=False, help="Caption position relative to image", choices=["Above", "Below"], default="Below")
     args = arg_parser.parse_args()
 
     print(args.p)
     print(args.r)
     print(args.o)
     print(args.a)
+    print(args.cap_pos)
 
-    config = Config(folder_path=args.p, caption_above_img=CAPTION_ABOVE_IMG, perform_audit=args.a, caption_regex=args.r, image_part_offset_threshold=args.o)
+    config = Config(folder_path=args.p, caption_above_img=args.cap_pos == "Above", perform_audit=args.a, caption_regex=args.r, image_part_offset_threshold=args.o)
 
     pdf_doc_proc = PdfDocProcessor(config)
     #extract_text_chunks(args.p, ChunkConfig(chunk_size=800, chunk_overlap=80))
@@ -147,7 +149,7 @@ class PdfDocProcessor:
             else:
                 new_unresolved_captions.append(item)
 
-        if CAPTION_ABOVE_IMG is True:
+        if self.config.caption_above_img is True:
             wip_list.reverse()
 
         doc_images.extend(wip_list)
