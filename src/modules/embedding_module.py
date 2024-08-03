@@ -9,7 +9,6 @@
 
 from langchain_community.embeddings import OllamaEmbeddings
 
-
 class Embeddings:
 
     def __init__(self, model: str, version: str) -> None:
