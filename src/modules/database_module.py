@@ -21,6 +21,30 @@ class EmbeddingDb:
             persist_directory=self.db_path, embedding_function=embedding_function
         )
 
+        self.generate_chunk_ids(chunks)
         # generate ids for each chunk and store
 
         db.persist()
+
+    def generate_chunk_ids(self, chunks: list[Document]) -> list[Document]:
+        #refrenced from: https://github.com/pixegami/rag-tutorial-v2/blob/main/populate_database.py
+
+        last_page_id = None
+        current_chunk_index = 0
+
+        for chunk in chunks:
+            source = chunk.metadata.get("source")
+            page = chunk.metadata.get("page")
+            current_page_id = f"{source}:{page}"
+
+            if current_page_id == last_page_id:
+                current_chunk_index += 1
+            else:
+                current_chunk_index = 0
+
+            chunk_id = f"{current_page_id}:{current_chunk_index}"
+            last_page_id = current_page_id
+
+            chunk.metadata["id"] = chunk_id
+
+        return chunks
