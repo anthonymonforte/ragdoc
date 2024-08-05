@@ -8,6 +8,8 @@
 
 import argparse
 import modules.pdf_module as pdf
+import modules.embedding_module as embed
+import modules.database_module as db
 
 def main():
 
@@ -28,8 +30,11 @@ def main():
     config = pdf.Config(folder_path=args.p, caption_above_img=args.cap_pos == "Above", perform_audit=args.a, caption_regex=args.r, image_part_offset_threshold=args.o)
 
     pdf_doc_proc = pdf.PdfDocProcessor(config)
-    #extract_text_chunks(args.p, ChunkConfig(chunk_size=800, chunk_overlap=80))
+    chunks = pdf_doc_proc.extract_text_chunks(args.p)
     pdf_doc_proc.extract_images_and_captions_from_folder()
+
+    doc_db = db.EmbeddingDb("Chroma")
+    doc_db.add_to_db(chunks, embed.Embeddings("llama3", "8b"))
 
 if __name__ == "__main__":
     main()

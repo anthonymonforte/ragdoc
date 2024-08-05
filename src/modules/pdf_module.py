@@ -55,7 +55,7 @@ class PdfDocProcessor:
     def __init__(self, config) -> None:
         self.config = config
 
-    def extract_text_chunks(self, folder_path):
+    def extract_text_chunks(self, folder_path) -> list[fitz.Document]:
         doc_loader = PyPDFDirectoryLoader(folder_path)
         docs = doc_loader.load()
         chunkifier = RecursiveCharacterTextSplitter(
@@ -67,6 +67,7 @@ class PdfDocProcessor:
 
         chunks = chunkifier.split_documents(docs)
         print("Chunks: ", len(chunks))
+        return chunks
 
     def extract_images_and_captions_from_folder(self):
         for path in os.listdir(self.config.folder_path):
