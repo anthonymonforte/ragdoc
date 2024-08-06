@@ -15,13 +15,19 @@ def main():
 
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-p", required=True, help="PDF folder")
+    arg_parser.add_argument("-m", required=True, help="Embedding Model")
+    arg_parser.add_argument("-v", required=True, help="Embedding Model Version")
+    arg_parser.add_argument("-url", required=True, help="Embedding Model URL")
     arg_parser.add_argument("-r", required=False, help="Caption Regular Expression", default="(?:\\n|^)(Fig\\.\\s\\d+.*?)(?:\\n|$)")
     arg_parser.add_argument("-o", required=False, help="Image Part Offset Threshold", default=.5)
-    arg_parser.add_argument("-a", required=False, help="Perform caption to image audit", default=True)
+    arg_parser.add_argument("-a", required=False, help="Perform caption to image audit", default=False)
     arg_parser.add_argument("-cap_pos", required=False, help="Caption position relative to image", choices=["Above", "Below"], default="Below")
     args = arg_parser.parse_args()
 
     print(args.p)
+    print(args.m)
+    print(args.v)
+    print(args.url)
     print(args.r)
     print(args.o)
     print(args.a)
@@ -34,7 +40,9 @@ def main():
     pdf_doc_proc.extract_images_and_captions_from_folder()
 
     doc_db = db.EmbeddingDb("Chroma")
-    doc_db.add_to_db(chunks, embed.Embeddings("llama3", "8b"))
+
+    embedding = embed.Embeddings(model=args.m, version=args.v, url=args.url)
+    doc_db.add_to_db(chunks, embedding.get_embedding_function())
 
 if __name__ == "__main__":
     main()

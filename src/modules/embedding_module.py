@@ -11,16 +11,11 @@ from langchain_community.embeddings import OllamaEmbeddings
 
 class Embeddings:
 
-    def __init__(self, model: str, version: str) -> None:
+    def __init__(self, model: str, version: str, url: str) -> None:
         self.model = model
         self.version = version
+        self.url = url
 
-    def get_embedding(self):
-        match self.model:
-            case "llama3":
-                return self.ollama_embedding_function()
-        return None
-
-    def ollama_embedding_function(self):
-        embeddings = OllamaEmbeddings(model=f"{self.model}:{self.version}") #e.g. llama3:8b
-        return embeddings
+    def get_embedding_function(self):
+        embedding_func = OllamaEmbeddings(base_url = self.url, model = f"{self.model}:{self.version}")
+        return embedding_func

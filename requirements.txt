@@ -1,5 +1,7 @@
 pymupdf
 tqdm
+ollama
+llama-index
 langchain-community
 langchain
 pylint

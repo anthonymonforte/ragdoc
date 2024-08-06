@@ -59,8 +59,8 @@ class PdfDocProcessor:
         doc_loader = PyPDFDirectoryLoader(folder_path)
         docs = doc_loader.load()
         chunkifier = RecursiveCharacterTextSplitter(
-            self.config.chunk_size,
-            self.config.chunk_overlap,
+            chunk_size=800,
+            chunk_overlap=80,
             length_function=len,
             is_separator_regex=False
         )
