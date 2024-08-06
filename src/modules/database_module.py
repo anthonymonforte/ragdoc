@@ -16,13 +16,33 @@ class EmbeddingDb:
         self.db_path = db_path
 
     def add_to_db(self, chunks: list[Document], embedding_function):
+        #refrenced from: https://github.com/pixegami/rag-tutorial-v2/blob/main/populate_database.py
 
         db = Chroma(
             persist_directory=self.db_path, embedding_function=embedding_function
         )
 
-        self.generate_chunk_ids(chunks)
-        # generate ids for each chunk and store
+        chunks_with_ids = self.generate_chunk_ids(chunks)
+
+        # Add or Update the documents.
+        existing_items = db.get(include=[])  # IDs are always included by default
+        existing_ids = set(existing_items["ids"])
+        print(f"Number of existing documents in DB: {len(existing_ids)}")
+
+        # Only add documents that don't exist in the DB.
+        new_chunks = []
+        for chunk in chunks_with_ids:
+            if chunk.metadata["id"] not in existing_ids:
+                new_chunks.append(chunk)
+
+        if len(new_chunks) > 0:
+            print(f"👉 Adding new documents: {len(new_chunks)}")
+            new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
+            db.add_documents(new_chunks, ids=new_chunk_ids)
+            db.persist()
+        else:
+            print("✅ No new documents to add")
+
 
         db.persist()
 
