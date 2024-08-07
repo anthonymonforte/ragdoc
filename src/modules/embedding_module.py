@@ -16,6 +16,6 @@ class Embeddings:
         self.version = version
         self.url = url
 
-    def get_embedding_function(self):        
+    def get_embedding_function(self):
         embedding_func = OllamaEmbeddings(base_url = self.url, model = f"{self.model}:{self.version}")
         return embedding_func
