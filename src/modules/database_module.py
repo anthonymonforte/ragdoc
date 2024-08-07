@@ -38,13 +38,9 @@ class EmbeddingDb:
         if len(new_chunks) > 0:
             print(f"👉 Adding new documents: {len(new_chunks)}")
             new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
-            db.add_documents(new_chunks, ids=new_chunk_ids)
-            db.persist()
+            db.add_documents(new_chunks, ids=new_chunk_ids)            
         else:
-            print("✅ No new documents to add")
-
-
-        db.persist()
+            print("✅ No new documents to add")        
 
     def generate_chunk_ids(self, chunks: list[Document]) -> list[Document]:
         #refrenced from: https://github.com/pixegami/rag-tutorial-v2/blob/main/populate_database.py
