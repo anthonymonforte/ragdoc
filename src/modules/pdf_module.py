@@ -151,6 +151,14 @@ class PdfDocProcessor:
 
         return self.combine_images(pdf_images)
 
+    # encasulate into more common class
+    def write_images(self, doc: fitz.Document, images: List[PdfImage]):
+        for img in images:
+            # Next: Combine image parts into one image
+            for img_part in img.image_parts:
+                pix = fitz.Pixmap(doc, img_part.xref)
+                pix.save(os.path.join(self.config.folder_path, "images/", f"{doc.xref}-{img_part.xref}-{img.image_page}.png"))
+
     def combine_images(self, images: List[PdfImage]):
         if len(images) < 2:
             return images
