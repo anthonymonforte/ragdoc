@@ -124,6 +124,9 @@ celerybeat.pid
 # Chroma
 Chroma/
 
+# Temp Folders
+tests/images/
+
 # Environments
 .env
 .venv
