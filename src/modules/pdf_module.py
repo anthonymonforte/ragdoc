@@ -41,6 +41,7 @@ class Caption:
 class ImagePart:
     xref: any
     bbox: any
+    dpi: any
 
 @dataclass
 class PdfImage:
@@ -84,10 +85,13 @@ class PdfDocProcessor:
         unresolved_captions.clear()
 
         page_numbers = tqdm(range(len(doc)), desc="pages")
+
         for page_num in page_numbers:
             page = doc.load_page(page_num)
 
             page_images = self.extract_images(page)
+            self.write_images(doc, page, page_images)
+
             page_captions = self.extract_captions(page)
 
             if len(page_images) > 0 or len(page_captions) > 0:
@@ -137,27 +141,37 @@ class PdfDocProcessor:
 
         page_num = page.number
 
-        #image_bboxes = []
         for img in page_images:
-            #xref =img[0]
-            #pix = fitz.Pixmap(doc, xref)
-            #pix.save(os.path.join(folder_path, "images/" "%s_p%s-%s.png" % (path[:-4], page_num, xref)))
-
-            #image_bboxes.append(img_bbox)   #TODO: use this information to combine images that have been broken apart
+            dpi=max( [img['xres'], img['yres'] ])
             pdf_images.append(PdfImage(image_bbox = img['bbox'],
                                         image_page = page_num,
-                                        image_parts = [ImagePart(xref=img['xref'], bbox=img['bbox'])],
+                                        image_parts = [ImagePart(xref=img['xref'], bbox=img['bbox'],dpi=dpi)],
                                         caption = None))
 
         return self.combine_images(pdf_images)
 
     # encasulate into more common class
-    def write_images(self, doc: fitz.Document, images: List[PdfImage]):
+    def write_images(self, doc: fitz.Document, page: fitz.Page, images: List[PdfImage]):
         for img in images:
-            # Next: Combine image parts into one image
-            for img_part in img.image_parts:
-                pix = fitz.Pixmap(doc, img_part.xref)
-                pix.save(os.path.join(self.config.folder_path, "images/", f"{doc.xref}-{img_part.xref}-{img.image_page}.png"))
+
+            final_image: fitz.Pixmap = None
+            if len(img.image_parts) == 1:
+                final_image = fitz.Pixmap(doc, img.image_parts[0].xref)
+            elif len(img.image_parts) > 1:
+
+                x0 = min(ip.bbox[0] for ip in img.image_parts)
+                y0 = min(ip.bbox[1] for ip in img.image_parts)
+                x1 = max(ip.bbox[2] for ip in img.image_parts)
+                y1 = max(ip.bbox[3] for ip in img.image_parts)
+                dpi = max(ip.dpi for ip in img.image_parts)
+
+                # specify colorspace?
+                final_image = page.get_pixmap(dpi=dpi, clip=fitz.Rect(x0,y0,x1,y1))
+            else:
+                return
+
+            final_image.save(os.path.join(self.config.folder_path, "images/", f"p{page.number}_x{img.image_parts[0].xref}.png"))
+
 
     def combine_images(self, images: List[PdfImage]):
         if len(images) < 2:

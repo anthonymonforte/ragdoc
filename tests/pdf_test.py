@@ -16,7 +16,7 @@ import src.modules.pdf_module as pdf
 from src.modules.pdf_module import PdfImage, ImagePart
 
 def create_pdf_image_obj(image_bbox: List[float], page: int, xref: int):    
-    return PdfImage(image_bbox=image_bbox, image_page=page, caption=None, image_parts=[ImagePart(xref=xref, bbox=image_bbox)])
+    return PdfImage(image_bbox=image_bbox, image_page=page, caption=None, image_parts=[ImagePart(xref=xref, bbox=image_bbox, dpi=96)])
 
 
 def get_default_config():
