@@ -49,7 +49,11 @@ class PdfImage:
     image_bbox: any
     image_page: int
     caption: Caption
+    filepath: str = ""
+    id: str = ""
 
+    def generate_id(self, source_doc_name):
+        return f"{source_doc_name}:{self.image_page}:{self.image_parts[0].xref}"
 
 class PdfDocProcessor:
 
@@ -170,7 +174,9 @@ class PdfDocProcessor:
             else:
                 return
 
-            final_image.save(os.path.join(self.config.folder_path, "images/", f"p{page.number}_x{img.image_parts[0].xref}.png"))
+            filepath = os.path.join(self.config.folder_path, "images/", f"p{page.number}_x{img.image_parts[0].xref}.png")
+            final_image.save(filepath)
+            img.filepath = filepath
 
 
     def combine_images(self, images: List[PdfImage]):

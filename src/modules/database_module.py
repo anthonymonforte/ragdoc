@@ -9,11 +9,22 @@
 
 from langchain.schema.document import Document
 from langchain.vectorstores.chroma import Chroma
+#import chromadb
+#from chromadb.utils.data_loaders import ImageLoader
 
 class EmbeddingDb:
 
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
+
+    # def add_image_to_db(self, images, embedding_function):
+    #     image_loader = ImageLoader()
+
+    #     client = chromadb.PersistentClient(path=self.db_path)
+    #     image_colleciton = client.get_or_create_collection(name="images", embedding_function=embedding_function, data_loader=image_loader)
+
+    #     for img in images:
+    #         image_colleciton.add(ids=)
 
     def add_to_db(self, chunks: list[Document], embedding_function):
         #refrenced from: https://github.com/pixegami/rag-tutorial-v2/blob/main/populate_database.py
@@ -64,3 +75,6 @@ class EmbeddingDb:
             chunk.metadata["id"] = chunk_id
 
         return chunks
+
+    def generate_image_ids(self, source_doc_name, images) -> list[str]:
+        return (img.generate_id(source_doc_name,) for img in images)
