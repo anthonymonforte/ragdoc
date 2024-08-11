@@ -10,7 +10,7 @@ import os
 import re
 
 from typing import List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -50,10 +50,16 @@ class PdfImage:
     image_page: int
     caption: Caption
     filepath: str = ""
-    id: str = ""
 
     def generate_id(self, source_doc_name):
         return f"{source_doc_name}:{self.image_page}:{self.image_parts[0].xref}"
+
+@dataclass
+class DocumentImage:
+    page: int
+    filepath: str
+    id: str
+    metadata: dict = field(default_factory=dict)
 
 class PdfDocProcessor:
 
