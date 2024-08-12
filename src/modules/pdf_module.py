@@ -50,6 +50,7 @@ class PdfImage:
     image_page: int
     caption: Caption
     filepath: str = ""
+    id: str = ""
 
     def generate_id(self, source_doc_name):
         return f"{source_doc_name}:{self.image_page}:{self.image_parts[0].xref}"
@@ -60,6 +61,13 @@ class DocumentImage:
     filepath: str
     id: str
     metadata: dict = field(default_factory=dict)
+
+    def add_caption(self, caption):
+        if caption is not None:
+            self.metadata["caption"] = caption.caption_text
+        else:
+            self.metadata["caption"] = ""
+        return self
 
 class PdfDocProcessor:
 
@@ -90,7 +98,7 @@ class PdfDocProcessor:
     def extract_images_and_captions_from_doc(self, doc_path: str):
         doc = fitz.Document(doc_path)
 
-        doc_images = []
+        doc_images: List[DocumentImage] = []
         unresolved_captions = []
         unresolved_captions.clear()
 
@@ -112,7 +120,7 @@ class PdfDocProcessor:
 
         return doc_images
 
-    def stitch_images_and_captions(self, page_images, page_captions, doc_images, unresolved_captions):
+    def stitch_images_and_captions(self, page_images: List[PdfImage], page_captions: List[Caption], doc_images: List[DocumentImage], unresolved_captions):
         page_images_and_captions = [{'y_pos': img.image_bbox[3], 'page': img.image_page, 'type': 'image', 'image': img} for img in page_images] + [{'y_pos': caption.caption_y0, 'page': caption.caption_page, 'caption': caption, 'type': 'caption'} for caption in page_captions] + unresolved_captions
 
         if not self.config.caption_above_img:
@@ -120,7 +128,7 @@ class PdfDocProcessor:
         else:
             sorted_by_y_pos = sorted(page_images_and_captions, key=lambda x: (x['page'], x['y_pos']), reverse=self.config.caption_above_img)
 
-        wip_list = []
+        wip_list: List[PdfImage] = []
         new_unresolved_captions = []
 
         for item in sorted_by_y_pos:
@@ -132,15 +140,15 @@ class PdfDocProcessor:
                     unresolved_captions.clear()
                 else:
                     new_unresolved_captions.append(item)
-            elif len(doc_images) > 0 and doc_images[-1].caption is None:
-                doc_images[-1].caption = item['caption']
+            elif len(doc_images) > 0 and not doc_images[-1].metadata["caption"]:
+                doc_images[-1].add_caption(item['caption'])
             else:
                 new_unresolved_captions.append(item)
 
         if self.config.caption_above_img is True:
             wip_list.reverse()
 
-        doc_images.extend(wip_list)
+        doc_images.extend([DocumentImage(page=wip.image_page,filepath=wip.filepath, id=wip.id).add_caption(wip.caption) for wip in wip_list])
         unresolved_captions.extend(new_unresolved_captions)
 
     def extract_images(self, page):
@@ -183,6 +191,7 @@ class PdfDocProcessor:
             filepath = os.path.join(self.config.folder_path, "images/", f"p{page.number}_x{img.image_parts[0].xref}.png")
             final_image.save(filepath)
             img.filepath = filepath
+            img.id = img.generate_id(doc.name)
 
 
     def combine_images(self, images: List[PdfImage]):
@@ -200,13 +209,13 @@ class PdfDocProcessor:
 
         return final_list
 
-    def extract_captions(self, page):
+    def extract_captions(self, page) -> List[Caption]:
 
         pattern = re.compile(self.config.caption_regex, re.IGNORECASE)
 
         #Resolve mismatched captions such as when they reside on different pages
 
-        page_captions: Caption = []
+        page_captions: List[Caption] = []
 
         page_num = page.number
         #caption_num = 0
@@ -216,17 +225,6 @@ class PdfDocProcessor:
             _, y0, _, _, text, _, _, = block
 
             for _ in pattern.findall(text):
-                # img_xref = 0
-                # #temporary guard check
-                # if len(images) > caption_num:
-                #     img_xref = images[caption_num][0]
-
-                # caption_path = os.path.join(folder_path, "images/" "%s_p%s-%s.txt" % (path[:-4], page_num, img_xref))
-                # with open(caption_path, "w") as file:
-                #     caption = match.strip()
-                #     file.write(caption)
-                # caption_num += 1
-
                 page_captions.append(Caption(caption_text = text,
                                             caption_y0 = y0,
                                             caption_page = page_num))

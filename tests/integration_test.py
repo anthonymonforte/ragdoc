@@ -25,9 +25,9 @@ def test_extract_images_and_captions_from_pdf_1_image_bottom_caption_test():
     assert len(doc_images) == 1
     pdf_image = doc_images[0]
 
-    assert len(pdf_image.image_parts) == 1
-    assert pdf_image.caption is not None
-    assert pdf_image.caption.caption_text == "Fig. 1 This is a caption. \n"
+    #assert len(pdf_image.image_parts) == 1
+    assert pdf_image.metadata["caption"] is not None
+    assert pdf_image.metadata["caption"] == "Fig. 1 This is a caption. \n"
 
 def test_extract_images_and_captions_from_pdf_2_images_one_bottom_caption_and_page_break_test():
     doc_images = get_default_pdf_module().extract_images_and_captions_from_doc(os.path.join(os.path.dirname(__file__), "test_assets/pdfs/pdf_2_images_one_bottom_caption_and_page_break_test.pdf"))
@@ -35,13 +35,13 @@ def test_extract_images_and_captions_from_pdf_2_images_one_bottom_caption_and_pa
     assert len(doc_images) == 2
 
     pdf_image = doc_images[0]
-    assert len(pdf_image.image_parts) == 1
-    assert pdf_image.caption is None
+    #assert len(pdf_image.image_parts) == 1
+    assert len(pdf_image.metadata["caption"]) == 0
 
     pdf_image = doc_images[1]
-    assert len(pdf_image.image_parts) == 1
-    assert pdf_image.caption is not None
-    assert pdf_image.caption.caption_text == "Fig. 1 This is a caption, on the next page. \n"
+    #assert len(pdf_image.image_parts) == 1
+    assert pdf_image.metadata["caption"] is not None
+    assert pdf_image.metadata["caption"] == "Fig. 1 This is a caption, on the next page. \n"
 
 def test_extract_images_and_captions_from_pdf_2_images_top_captions_and_page_break():
     config = get_default_config()
@@ -51,11 +51,11 @@ def test_extract_images_and_captions_from_pdf_2_images_top_captions_and_page_bre
     assert len(doc_images) == 2
 
     pdf_image = doc_images[0]
-    assert len(pdf_image.image_parts) == 1
-    assert pdf_image.caption is not None
-    assert pdf_image.caption.caption_text == "Fig. 1 This is a caption \n"
+    #assert len(pdf_image.image_parts) == 1
+    assert pdf_image.metadata["caption"] is not None
+    assert pdf_image.metadata["caption"] == "Fig. 1 This is a caption \n"
 
     pdf_image = doc_images[1]
-    assert len(pdf_image.image_parts) == 1
-    assert pdf_image.caption is not None
-    assert pdf_image.caption.caption_text == "Fig. 2 This is also a caption \n"
+    #assert len(pdf_image.image_parts) == 1
+    assert pdf_image.metadata["caption"] is not None
+    assert pdf_image.metadata["caption"] == "Fig. 2 This is also a caption \n"
