@@ -5,6 +5,7 @@
 # pylint: disable=C0301
 # pylint: disable=C0115
 # pylint: disable=W0511
+# pylint: disable=E0401
 
 import os
 import re
@@ -18,7 +19,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import fitz
 from tqdm import tqdm
 
-from .constants import DictionaryKeys
+from src.modules.constants import DictionaryKeys
 
 @dataclass
 class ChunkConfig:
