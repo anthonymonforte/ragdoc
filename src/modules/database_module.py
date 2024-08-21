@@ -12,6 +12,8 @@ from langchain.vectorstores.chroma import Chroma
 #import chromadb
 #from chromadb.utils.data_loaders import ImageLoader
 
+from src.modules.constants import DictionaryKeys
+
 class EmbeddingDb:
 
     def __init__(self, db_path: str) -> None:
@@ -60,8 +62,8 @@ class EmbeddingDb:
         current_chunk_index = 0
 
         for chunk in chunks:
-            source = chunk.metadata.get("source")
-            page = chunk.metadata.get("page")
+            source = chunk.metadata.get(DictionaryKeys.Source)
+            page = chunk.metadata.get(DictionaryKeys.Page)
             current_page_id = f"{source}:{page}"
 
             if current_page_id == last_page_id:
