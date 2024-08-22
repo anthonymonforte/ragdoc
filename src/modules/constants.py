@@ -7,5 +7,5 @@ from typing import Final
 
 class DictionaryKeys:
     CAPTION: Final = "caption"
-    SOURCE: Final = "source"
-    PAGE: Final = "page"
+    #SOURCE: Final = "source"
+    #PAGE: Final = "page"
