@@ -7,10 +7,13 @@
 # pylint: disable=W0511
 # pylint: disable=R0903
 
-from langchain.schema.document import Document
-from langchain.vectorstores.chroma import Chroma
 #import chromadb
 #from chromadb.utils.data_loaders import ImageLoader
+
+from langchain.schema.document import Document
+from langchain.vectorstores.chroma import Chroma
+
+from modules.constants import DictionaryKeys
 
 class EmbeddingDb:
 
@@ -60,8 +63,8 @@ class EmbeddingDb:
         current_chunk_index = 0
 
         for chunk in chunks:
-            source = chunk.metadata.get("source")
-            page = chunk.metadata.get("page")
+            source = chunk.metadata.get(DictionaryKeys.SOURCE)
+            page = chunk.metadata.get(DictionaryKeys.PAGE)
             current_page_id = f"{source}:{page}"
 
             if current_page_id == last_page_id:

@@ -19,7 +19,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import fitz
 from tqdm import tqdm
 
-from src.modules.constants import DictionaryKeys
+from modules.constants import DictionaryKeys
+
 
 @dataclass
 class ChunkConfig:
