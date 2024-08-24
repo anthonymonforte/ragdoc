@@ -5,7 +5,8 @@
 
 from typing import Final
 
-class DictionaryKeys:
+class MetadataKeys:
     CAPTION: Final = "caption"
     SOURCE: Final = "source"
     PAGE: Final = "page"
+    ID: Final = "id"

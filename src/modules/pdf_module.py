@@ -19,7 +19,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import fitz
 from tqdm import tqdm
 
-from modules.constants import DictionaryKeys
+from modules.constants import MetadataKeys
 
 
 @dataclass
@@ -68,9 +68,9 @@ class DocumentImage:
 
     def add_caption(self, caption):
         if caption is not None:
-            self.metadata[DictionaryKeys.CAPTION] = caption.caption_text
+            self.metadata[MetadataKeys.CAPTION] = caption.caption_text
         else:
-            self.metadata[DictionaryKeys.CAPTION] = ""
+            self.metadata[MetadataKeys.CAPTION] = ""
         return self
 
 class PdfDocProcessor:
@@ -140,12 +140,12 @@ class PdfDocProcessor:
                 wip_list.append(item['image'])
             elif len(wip_list) > 0:
                 if wip_list[-1].caption is None:
-                    wip_list[-1].caption = item[DictionaryKeys.CAPTION]
+                    wip_list[-1].caption = item[MetadataKeys.CAPTION]
                     unresolved_captions.clear()
                 else:
                     new_unresolved_captions.append(item)
-            elif len(doc_images) > 0 and not doc_images[-1].metadata[DictionaryKeys.CAPTION]:
-                doc_images[-1].add_caption(item[DictionaryKeys.CAPTION])
+            elif len(doc_images) > 0 and not doc_images[-1].metadata[MetadataKeys.CAPTION]:
+                doc_images[-1].add_caption(item[MetadataKeys.CAPTION])
             else:
                 new_unresolved_captions.append(item)
 

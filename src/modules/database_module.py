@@ -13,7 +13,7 @@
 from langchain.schema.document import Document
 from langchain.vectorstores.chroma import Chroma
 
-from modules.constants import DictionaryKeys
+from modules.constants import MetadataKeys
 
 class EmbeddingDb:
 
@@ -46,7 +46,7 @@ class EmbeddingDb:
         # Only add documents that don't exist in the DB.
         new_chunks = []
         for chunk in chunks_with_ids:
-            if chunk.metadata["id"] not in existing_ids:
+            if chunk.metadata[MetadataKeys.ID] not in existing_ids:
                 new_chunks.append(chunk)
 
         if len(new_chunks) > 0:
@@ -63,8 +63,8 @@ class EmbeddingDb:
         current_chunk_index = 0
 
         for chunk in chunks:
-            source = chunk.metadata.get(DictionaryKeys.SOURCE)
-            page = chunk.metadata.get(DictionaryKeys.PAGE)
+            source = chunk.metadata.get(MetadataKeys.SOURCE)
+            page = chunk.metadata.get(MetadataKeys.PAGE)
             current_page_id = f"{source}:{page}"
 
             if current_page_id == last_page_id:
@@ -75,7 +75,7 @@ class EmbeddingDb:
             chunk_id = f"{current_page_id}:{current_chunk_index}"
             last_page_id = current_page_id
 
-            chunk.metadata["id"] = chunk_id
+            chunk.metadata[MetadataKeys.ID] = chunk_id
 
         return chunks
 
