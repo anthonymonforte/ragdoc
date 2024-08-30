@@ -219,7 +219,7 @@ class PdfDocProcessor:
 
         page_captions: List[Caption] = []
 
-        page_num = page.number        
+        page_num = page.number
         text_blocks = page.get_text("blocks")
 
         for _, block in enumerate(text_blocks):
