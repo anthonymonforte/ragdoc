@@ -172,7 +172,7 @@ class PdfDocProcessor:
 
         return self.combine_images(pdf_images)
 
-    # encasulate into more common class
+    # encapsulate into more common class
     def write_images(self, doc: fitz.Document, page: fitz.Page, images: List[PdfImage]):
         for img in images:
 
@@ -217,12 +217,9 @@ class PdfDocProcessor:
 
         pattern = re.compile(self.config.caption_regex, re.IGNORECASE)
 
-        #Resolve mismatched captions such as when they reside on different pages
-
         page_captions: List[Caption] = []
 
-        page_num = page.number
-        #caption_num = 0
+        page_num = page.number        
         text_blocks = page.get_text("blocks")
 
         for _, block in enumerate(text_blocks):
@@ -237,6 +234,7 @@ class PdfDocProcessor:
 
     def audit_log(self, doc, doc_images, folder_path):
         """Function logging mismatch between images and captions."""
+
         caption_path = os.path.join(folder_path, "images/", "caption_audit.txt")
         log_path = os.path.join(folder_path, "images/", "log.txt")
 
